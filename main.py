@@ -4,8 +4,7 @@ from disnake.ext import commands
 from cogs.music import MusicCog
 from config import TOKEN
 
-bot = commands.Bot(command_prefix='/', help_command=None, intents=disnake.Intents.all(),
-                   test_guilds=[1193283727548231720])
+bot = commands.Bot(command_prefix='/', help_command=None, intents=disnake.Intents.all())
 
 bot.add_cog(MusicCog(bot))
 
