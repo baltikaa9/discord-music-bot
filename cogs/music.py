@@ -28,6 +28,14 @@ class MusicCog(commands.Cog):
         self.music_queue: list[MusicInfo] = []
         self.vc: VoiceClient | None = None
 
+    @commands.Cog.listener()
+    async def on_voice_state_update(self, member: Member, before: VoiceState, after: VoiceState):
+        if self.vc and before.channel and before.channel.id == self.vc.channel.id and len(before.channel.members) == 1:
+            self.music_queue = []
+            await self.vc.disconnect()
+            # self.is_playing = False
+            # self.is_paused = False
+
     @commands.slash_command(description='Add a song from URL or search to queue')
     async def play(self, inter: ApplicationCommandInteraction, query: str):
         if not inter.author.voice:
