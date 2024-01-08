@@ -12,7 +12,7 @@ YDL_OPTIONS = {
     'key': 'FFmpegExtractAudio',
 }
 
-FFMPEGOPTIONS = {
+FFMPEG_OPTIONS = {
     'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
     'options': '-vn',
 }
