@@ -3,6 +3,7 @@ import random
 from disnake import ApplicationCommandInteraction, Member, VoiceState, MessageInteraction
 from disnake.ext import commands
 
+from config import BOT_DS_ID
 from services.music import MusicService
 
 
@@ -18,6 +19,10 @@ class MusicCog(commands.Cog):
                 and before.channel.id == self.music_service.vc.channel.id and len(before.channel.members) == 1):
             self.music_service.music_queue = []
             await self.music_service.vc.disconnect()
+
+        if member.id == BOT_DS_ID and before.channel and not after.channel:
+            self.music_service.music_queue = []
+            await self.music_service.vc.disconnect(force=True)
 
     @commands.Cog.listener()
     async def on_button_click(self, inter: MessageInteraction):
@@ -103,3 +108,9 @@ class MusicCog(commands.Cog):
     async def shuffle_queue(self, inter: ApplicationCommandInteraction | MessageInteraction):
         random.shuffle(self.music_service.music_queue)
         await inter.send(f'The music queue has been shuffled')
+
+
+    @commands.command()
+    async def ping(self, inter):
+        if self.music_service.vc:
+            await inter.send(f'connected: {self.music_service.vc.is_connected()}')

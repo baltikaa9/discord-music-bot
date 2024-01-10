@@ -4,6 +4,7 @@ import os
 load_dotenv()
 
 TOKEN = os.getenv('TOKEN')
+BOT_DS_ID = 1193276515077599272
 
 YDL_OPTIONS = {
     'format': 'bestaudio',
