@@ -2,9 +2,11 @@ import asyncio
 from dataclasses import dataclass
 from typing import Literal
 
+import disnake.ui
 from disnake import VoiceClient, Message, ApplicationCommandInteraction, AudioSource, Embed, Color, FFmpegPCMAudio, \
     VoiceChannel, TextChannel
 from disnake.ext.commands import Bot
+from disnake.ui import Button
 from yt_dlp import YoutubeDL, DownloadError
 
 from config import FFMPEG_OPTIONS, YDL_OPTIONS
@@ -75,16 +77,33 @@ class MusicService:
                 **FFMPEG_OPTIONS,
             )
 
-            embed = Embed(
-                title='Now playing', description=f'`{music.title}` by `{music.author}`',
-                color=Color.purple()
-            )
-            self.player_message = await text_channel.send(embed=embed)
+            embed, buttons = await self.create_player(music)
+            self.player_message = await text_channel.send(embed=embed, components=buttons)
 
             self.vc.play(
                 audio_src,
                 after=lambda e: asyncio.run_coroutine_threadsafe(self.play_music(text_channel), self.bot.loop)
             )
+
+    @staticmethod
+    async def create_player(music: MusicInfo) -> tuple[Embed, list[Button]]:
+        embed = Embed(
+            title='Now playing', description=f'`{music.title}` by `{music.author}`',
+            color=Color.purple()
+        )
+        buttons = [
+            Button(label="Pause", style=disnake.ButtonStyle.blurple,
+                   emoji=disnake.PartialEmoji(name='pause', id=1059394116439515136), custom_id='pause'),
+            Button(label="Stop", style=disnake.ButtonStyle.red,
+                   emoji=disnake.PartialEmoji(name='stop', id=1053672684820631612), custom_id='stop'),
+            Button(label="Skip", style=disnake.ButtonStyle.green,
+                   emoji=disnake.PartialEmoji(name='skip', id=1053664978298740776), custom_id='skip'),
+            Button(label="Shuffle", style=disnake.ButtonStyle.green,
+                   emoji=disnake.PartialEmoji(name='shuffle', id=1065366332108976238), custom_id='shuffle'),
+            Button(label="Queue", style=disnake.ButtonStyle.grey,
+                   emoji='📃', custom_id='queue'),
+        ]
+        return embed, buttons
 
     async def connect_to_voice_channel(self, author_voice_channel: VoiceChannel) -> bool:
         if not self.vc or not self.vc.is_connected():

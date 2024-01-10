@@ -1,6 +1,6 @@
 import random
 
-from disnake import ApplicationCommandInteraction, Member, VoiceState
+from disnake import ApplicationCommandInteraction, Member, VoiceState, MessageInteraction
 from disnake.ext import commands
 
 from services.music import MusicService
@@ -19,6 +19,22 @@ class MusicCog(commands.Cog):
             self.music_service.music_queue = []
             await self.music_service.vc.disconnect()
 
+    @commands.Cog.listener()
+    async def on_button_click(self, inter: MessageInteraction):
+        match inter.component.custom_id:
+            case 'pause':
+                await self.pause(inter)
+            case 'stop':
+                await self.stop(inter)
+            case 'skip':
+                await self.skip(inter)
+            case 'shuffle':
+                await self.shuffle_queue(inter)
+            case 'queue':
+                await self.get_queue(inter)
+            case _:
+                return
+
     @commands.slash_command(description='Add a song from URL or search to queue')
     async def play(
             self, inter: ApplicationCommandInteraction,
@@ -34,7 +50,7 @@ class MusicCog(commands.Cog):
         await self.music_service.add_music_to_queue_and_play(inter, query, 'top')
 
     @commands.slash_command(description='Pause/resume the currently playing song')
-    async def pause(self, inter: ApplicationCommandInteraction):
+    async def pause(self, inter: ApplicationCommandInteraction | MessageInteraction):
         if not self.music_service.vc:
             await inter.send(
                 content="There's no music currently playing, add some music with the `/play` command",
@@ -50,7 +66,7 @@ class MusicCog(commands.Cog):
             await inter.send('Current music has been resumed')
 
     @commands.slash_command(description='Stop the currently playing song')
-    async def stop(self, inter: ApplicationCommandInteraction):
+    async def stop(self, inter: ApplicationCommandInteraction | MessageInteraction):
         if self.music_service.vc:
             self.music_service.music_queue = []
             await self.music_service.vc.disconnect()
@@ -59,7 +75,7 @@ class MusicCog(commands.Cog):
             await inter.send('Bot already disconnected', ephemeral=True)
 
     @commands.slash_command(description='Skip the currently playing song')
-    async def skip(self, inter: ApplicationCommandInteraction):
+    async def skip(self, inter: ApplicationCommandInteraction | MessageInteraction):
         if self.music_service.vc and self.music_service.vc.is_playing():
             self.music_service.vc.stop()
 
@@ -84,6 +100,6 @@ class MusicCog(commands.Cog):
             await inter.send('Queue is empty')
 
     @commands.slash_command(name='shuffle', description='Shuffle the music queue')
-    async def shuffle_queue(self, inter: ApplicationCommandInteraction):
+    async def shuffle_queue(self, inter: ApplicationCommandInteraction | MessageInteraction):
         random.shuffle(self.music_service.music_queue)
         await inter.send(f'The music queue has been shuffled')
