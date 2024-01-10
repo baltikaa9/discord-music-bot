@@ -1,3 +1,5 @@
+import random
+
 from disnake import ApplicationCommandInteraction, Member, VoiceState
 from disnake.ext import commands
 
@@ -79,3 +81,8 @@ class MusicCog(commands.Cog):
             await inter.send(f'Music queue:\n{message}')
         else:
             await inter.send('Queue is empty')
+
+    @commands.slash_command(name='shuffle', description='Shuffle the music queue')
+    async def shuffle_queue(self, inter: ApplicationCommandInteraction):
+        random.shuffle(self.music_service.music_queue)
+        await inter.send(f'The music queue has been shuffled')
