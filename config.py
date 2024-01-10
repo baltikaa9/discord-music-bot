@@ -6,7 +6,7 @@ load_dotenv()
 TOKEN = os.getenv('TOKEN')
 
 YDL_OPTIONS = {
-    'format': 'bestaudio/best',
+    'format': 'bestaudio',
     'noplaylist': 'True',
     'simulate': 'True',
     'key': 'FFmpegExtractAudio',
