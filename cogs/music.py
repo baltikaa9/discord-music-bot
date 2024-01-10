@@ -1,5 +1,6 @@
 import asyncio
 from dataclasses import dataclass
+from typing import Literal
 
 import disnake
 from disnake.ext import commands
@@ -34,28 +35,23 @@ class MusicCog(commands.Cog):
             await self.vc.disconnect()
 
     @commands.slash_command(description='Add a song from URL or search to queue')
-    async def play(self, inter: ApplicationCommandInteraction,
-                   query: str = commands.Param(description='The query to search')):
-        music = await self._play_prepare(inter, query)
-
-        if music:
-            self.music_queue.append(music)
-
-            if not self.vc.is_playing():
-                await self.play_music(inter)
+    async def play(
+            self, inter: ApplicationCommandInteraction,
+            query: str = commands.Param(description='The query to search')
+    ):
+        await self.add_music_to_queue_and_play(inter, query, 'bottom')
 
     @commands.slash_command(description='Add a song from URL or search to the top on queue')
-    async def playnext(self, inter: ApplicationCommandInteraction,
-                       query: str = commands.Param(description='The query to search')):
-        music = await self._play_prepare(inter, query)
+    async def playnext(
+            self, inter: ApplicationCommandInteraction,
+            query: str = commands.Param(description='The query to search')
+    ):
+        await self.add_music_to_queue_and_play(inter, query, 'top')
 
-        if music:
-            self.music_queue.insert(0, music)
-
-            if not self.vc.is_playing():
-                await self.play_music(inter)
-
-    async def _play_prepare(self, inter: ApplicationCommandInteraction, query: str) -> MusicInfo | None:
+    async def add_music_to_queue_and_play(
+            self, inter: ApplicationCommandInteraction,
+            query: str, queue_pos: Literal['top', 'bottom'],
+    ) -> None:
         if not inter.author.voice:
             await inter.send(f'{inter.author.mention}, connect to a voice channel', ephemeral=True)
             return
@@ -71,13 +67,23 @@ class MusicCog(commands.Cog):
             f'{inter.author.mention} | Added `{music.title}` by `{music.author}` in queue')
 
         await self.connect_to_voice_channel(inter)
-        return music
+
+        match queue_pos:
+            case 'top':
+                self.music_queue.insert(0, music)
+            case 'bottom':
+                self.music_queue.append(music)
+
+        if not self.vc.is_playing():
+            await self.play_music(inter)
 
     @commands.slash_command(description='Pause/resume the currently playing song')
     async def pause(self, inter: ApplicationCommandInteraction):
         if not self.vc:
-            await inter.send("There's no music currently playing, add some music with the `/play` command",
-                             ephemeral=True)
+            await inter.send(
+                content="There's no music currently playing, add some music with the `/play` command",
+                ephemeral=True
+            )
             return
 
         if not self.vc.is_paused():
@@ -100,13 +106,16 @@ class MusicCog(commands.Cog):
     async def skip(self, inter: ApplicationCommandInteraction):
         if self.vc and self.vc.is_playing():
             self.vc.stop()
+
             if self.music_queue:
                 await inter.send('Current music has been skipped')
             else:
                 await inter.send('Current music has been skipped. Queue is empty')
         else:
-            await inter.send("There's no music currently playing, add some music with the `/play` command",
-                             ephemeral=True)
+            await inter.send(
+                content="There's no music currently playing, add some music with the `/play` command",
+                ephemeral=True
+            )
 
     @commands.slash_command(name='queue', description='Show a music queue')
     async def get_queue(self, inter: ApplicationCommandInteraction):
@@ -135,8 +144,10 @@ class MusicCog(commands.Cog):
                                   color=disnake.Color.purple())
             self.player_message = await inter.channel.send(embed=embed)
 
-            self.vc.play(audio_src,
-                         after=lambda e: asyncio.run_coroutine_threadsafe(self.play_music(inter), self.bot.loop))
+            self.vc.play(
+                audio_src,
+                after=lambda e: asyncio.run_coroutine_threadsafe(self.play_music(inter), self.bot.loop)
+            )
 
     async def connect_to_voice_channel(self, inter: ApplicationCommandInteraction) -> None:
         if not self.vc or not self.vc.is_connected():
