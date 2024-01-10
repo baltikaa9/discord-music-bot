@@ -59,9 +59,9 @@ class MusicService:
                 self.music_queue.append(music)
 
         if not self.vc.is_playing():
-            await self.play_music(inter.channel())
+            await self.play_music(inter.channel)
 
-    async def play_music(self, text_channel: TextChannel) -> None:
+    async def play_music(self, text_channel: lambda: TextChannel) -> None:
         if self.player_message:
             await self.player_message.delete()
             self.player_message = None
@@ -70,8 +70,8 @@ class MusicService:
             music = self.music_queue.pop(0)
 
             audio_src: AudioSource = FFmpegPCMAudio(
-                executable='ffmpeg/ffmpeg.exe',
                 source=music.url,
+                executable='ffmpeg/ffmpeg.exe',
                 **FFMPEG_OPTIONS,
             )
 

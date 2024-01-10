@@ -67,6 +67,7 @@ class MusicCog(commands.Cog):
                 await inter.send('Current music has been skipped')
             else:
                 await inter.send('Current music has been skipped. Queue is empty')
+                await self.music_service.vc.disconnect()
         else:
             await inter.send(
                 content="There's no music currently playing, add some music with the `/play` command",
