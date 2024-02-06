@@ -1,5 +1,5 @@
 import asyncio
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal
 
 import disnake.ui
@@ -22,9 +22,18 @@ class MusicInfo:
         return f'`{self.title}` by `{self.author}`'
 
 
+@dataclass
+class DsServer:
+    music_queue: list[MusicInfo] = field(default_factory=lambda: [])
+    vc: VoiceClient | None = None
+    player_message: Message | None = None
+
+
 class MusicService:
     def __init__(self, bot: Bot):
         self.bot: Bot = bot
+
+        # self.ds_servers: dict[int, DsServer] = {}
 
         self.music_queue: list[MusicInfo] = []
         self.vc: VoiceClient | None = None
@@ -34,6 +43,9 @@ class MusicService:
             self, inter: ApplicationCommandInteraction,
             query: str, queue_pos: Literal['top', 'bottom'],
     ) -> None:
+        # if inter.guild_id not in self.ds_servers:
+        #     self.ds_servers[inter.guild_id] = DsServer()
+
         if not inter.author.voice:
             await inter.send(f'{inter.author.mention}, connect to a voice channel', ephemeral=True)
             return
@@ -130,3 +142,5 @@ class MusicService:
             return MusicInfo(title=info['title'], author=info['channel'], url=info['url'])
         else:
             return
+
+    # TODO: make addition to my music as vk (use MongoDB - {<guild_id>: list[<music_name>/MusicInfo])
